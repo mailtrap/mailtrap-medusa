@@ -1,0 +1,92 @@
+name: Compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.deps }} dependencies
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - deps: locked
+          - deps: lowest
+            install: >-
+              @medusajs/admin-sdk@2.22.0 @medusajs/cli@2.22.0 @medusajs/eslint-plugin@2.22.0
+              @medusajs/framework@2.22.0 @medusajs/icons@2.22.0 @medusajs/medusa@2.22.0
+              @medusajs/test-utils@2.22.0 @medusajs/ui@4.2.1 mailtrap@5.0.0
+          - deps: latest
+            install: >-
+              @medusajs/admin-sdk@latest @medusajs/cli@latest @medusajs/eslint-plugin@latest
+              @medusajs/framework@latest @medusajs/icons@latest @medusajs/medusa@latest
+              @medusajs/test-utils@latest @medusajs/ui@latest mailtrap@latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Use the ${{ matrix.deps }} Medusa and Mailtrap SDK
+        if: matrix.install
+        run: npm install --no-save ${{ matrix.install }}
+      - run: npm test
+      - run: npx tsc --noEmit -p .
+      - run: npx medusa plugin:build
+      - name: Install the packed plugin in a new project
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          packages=$(node -p 'const pkg = require("./package.json"); [...Object.keys(pkg.peerDependencies), "mailtrap"].map((name) => `${name}@${require(`./node_modules/${name}/package.json`).version}`).join(" ")')
+          mkdir "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm init -y > /dev/null
+          npm install "$RUNNER_TEMP"/mailtrap-medusa-*.tgz $packages
+          node -e '
+            const [Service] = require("mailtrap-medusa/providers/mailtrap").default.services
+            if (Service.identifier !== "notification-mailtrap") throw new Error(`Unexpected identifier ${Service.identifier}`)
+            Service.validateOptions({ api_key: "token", from: "a@example.com" })
+            new Service({ logger: console }, { api_key: "token", from: "a@example.com" })
+          '
+
+  alert:
+    needs: check
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - run: |
+          gh label create compatibility --color B60205 --description "Breaks against a supported Medusa or mailtrap SDK release" --force
+          number=$(gh issue list --label compatibility --state open --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Still failing: $RUN_URL"
+          else
+            gh issue create --label compatibility \
+              --title "Plugin breaks against a supported Medusa or mailtrap SDK release" \
+              --body "The weekly compatibility check failed: $RUN_URL"
+          fi
+
+  keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - run: gh workflow enable compatibility.yml
