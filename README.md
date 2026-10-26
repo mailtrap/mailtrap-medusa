@@ -1,64 +1,109 @@
-<p align="center">
-  <a href="https://www.medusajs.com">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/59018053/229103275-b5e482bb-4601-46e6-8142-244f531cebdb.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    <img alt="Medusa logo" src="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    </picture>
-  </a>
-</p>
-<h1 align="center">
-  Medusa Plugin Starter
-</h1>
+# mailtrap-medusa
 
-<h4 align="center">
-  <a href="https://docs.medusajs.com">Documentation</a> |
-  <a href="https://www.medusajs.com">Website</a>
-</h4>
+Mailtrap Email API notification provider for Medusa. Requires Medusa 2.22 or a newer 2.x release.
 
-<p align="center">
-  Building blocks for digital commerce
-</p>
-<p align="center">
-  <a href="https://github.com/medusajs/medusa/blob/master/CONTRIBUTING.md">
-    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat" alt="PRs welcome!" />
-  </a>
-    <a href="https://www.producthunt.com/posts/medusa"><img src="https://img.shields.io/badge/Product%20Hunt-%231%20Product%20of%20the%20Day-%23DA552E" alt="Product Hunt"></a>
-  <a href="https://discord.gg/xpCwq3Kfn8">
-    <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
-  </a>
-  <a href="https://twitter.com/intent/follow?screen_name=medusajs">
-    <img src="https://img.shields.io/twitter/follow/medusajs.svg?label=Follow%20@medusajs" alt="Follow @medusajs" />
-  </a>
-</p>
+## Prerequisites
 
-## Compatibility
+- A Mailtrap account
+- A [verified sending domain](https://docs.mailtrap.io/email-api-smtp/setup/sending-domain)
+- An API token for that domain
 
-This starter is compatible with versions >= 2.4.0 of `@medusajs/medusa`. 
+## Install
 
-## Getting Started
+```bash
+npm install mailtrap-medusa
+```
 
-Visit the [Quickstart Guide](https://docs.medusajs.com/learn/installation) to set up a server.
+## Configure
 
-Visit the [Plugins documentation](https://docs.medusajs.com/learn/fundamentals/plugins) to learn more about plugins and how to create them.
+Add the provider to the Notification Module in `medusa-config.ts`:
 
-Visit the [Docs](https://docs.medusajs.com/learn/installation#get-started) to learn more about our system requirements.
+```ts
+module.exports = defineConfig({
+  modules: [
+    {
+      resolve: "@medusajs/medusa/notification",
+      options: {
+        providers: [
+          {
+            resolve: "mailtrap-medusa/providers/mailtrap",
+            id: "mailtrap",
+            options: {
+              channels: ["email"],
+              api_key: process.env.MAILTRAP_API_KEY,
+              from: process.env.MAILTRAP_FROM,
+            },
+          },
+        ],
+      },
+    },
+  ],
+})
+```
 
-## What is Medusa
+And set the environment variables in `.env`:
 
-Medusa is a set of commerce modules and tools that allow you to build rich, reliable, and performant commerce applications without reinventing core commerce logic. The modules can be customized and used to build advanced ecommerce stores, marketplaces, or any product that needs foundational commerce primitives. All modules are open-source and freely available on npm.
+```
+MAILTRAP_API_KEY=
+MAILTRAP_FROM=
+```
 
-Learn more about [Medusa’s architecture](https://docs.medusajs.com/learn/introduction/architecture) and [commerce modules](https://docs.medusajs.com/learn/fundamentals/modules/commerce-modules) in the Docs.
+`MAILTRAP_FROM` must be an address on your verified domain. Only one provider can handle a channel, so remove `notification-local` from the `email` channel if it is configured.
 
-## Community & Contributions
+### Options
 
-The community and core team are available in [GitHub Discussions](https://github.com/medusajs/medusa/discussions), where you can ask for support, discuss roadmap, and share ideas.
+| Option     | Required | Description                                                                         |
+| ---------- | -------- | ----------------------------------------------------------------------------------- |
+| `api_key`  | yes      | Mailtrap API token.                                                                 |
+| `from`     | yes      | Default sender address. `notification.from` overrides it.                           |
+| `category` | no       | Default category for emails sent with `content` (not used for template emails).     |
 
-Join our [Discord server](https://discord.com/invite/medusajs) to meet other community members.
+## Sending
 
-## Other channels
+With a Mailtrap template: `template` is the template UUID and `data` holds the template variables.
 
-- [GitHub Issues](https://github.com/medusajs/medusa/issues)
-- [Twitter](https://twitter.com/medusajs)
-- [LinkedIn](https://www.linkedin.com/company/medusajs)
-- [Medusa Blog](https://medusajs.com/blog/)
+```ts
+import { Modules } from "@medusajs/framework/utils"
+
+const notificationModuleService = container.resolve(Modules.NOTIFICATION)
+
+await notificationModuleService.createNotifications({
+  to: "customer@example.com",
+  channel: "email",
+  template: "<template-uuid>",
+  data: { name: "Ada" },
+})
+```
+
+Or inline, with `content`:
+
+```ts
+await notificationModuleService.createNotifications({
+  to: "customer@example.com",
+  channel: "email",
+  template: "order-placed",
+  content: {
+    subject: "Your order",
+    html: "<p>Thanks for your order.</p>",
+    text: "Thanks for your order.",
+  },
+})
+```
+
+### `provider_data`
+
+- `category`: category of the email, up to 255 characters. Shown in Mailtrap Email Logs and Stats. Ignored for template emails, which carry their own category.
+- `custom_variables`: map of string values, up to 1000 bytes in total. Shown in Mailtrap Email Logs.
+
+## Errors
+
+A failed send throws `Failed to send email with Mailtrap: <API message>` and the notification is marked as failed.
+
+## Links
+
+- [Mailtrap Email API](https://docs.mailtrap.io/developers/email-sending/transactional/send-transactional-email)
+- [Medusa Notification Module](https://docs.medusajs.com/resources/infrastructure-modules/notification)
+
+## License
+
+MIT
