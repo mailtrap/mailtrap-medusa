@@ -1,0 +1,19 @@
+LICENSE
+  s_9aaa27d7027f43::t_26f456ba1cdb19 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d8a7f953e81ebb7c4818163fdee1f49b6f7deb23",
+  "prompts": {},
+  "sessions": {
+    "s_9aaa27d7027f43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e61461d8-7f15-46da-b3ab-40364a2c2753",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}
