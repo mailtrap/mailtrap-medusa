@@ -1,0 +1,23 @@
+.github/workflows/draft-release.yml
+  s_9aaa27d7027f43::t_3733c80b417b53 1-88
+CHANGELOG.md
+  s_9aaa27d7027f43::t_e9ff2d56828cbf 1-2
+.tool-versions
+  s_9aaa27d7027f43::t_2b6fa29b132aff 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f485a99319cda3d6e43b5083931ea37e63aacb83",
+  "prompts": {},
+  "sessions": {
+    "s_9aaa27d7027f43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e61461d8-7f15-46da-b3ab-40364a2c2753",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}
