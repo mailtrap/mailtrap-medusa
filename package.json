@@ -1,6 +1,6 @@
 {
   "name": "mailtrap-medusa",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mailtrap Email API notification provider for Medusa",
   "author": "Railsware Products Studio LLC",
   "license": "MIT",
