@@ -30,6 +30,7 @@ jobs:
               @medusajs/admin-sdk@latest @medusajs/cli@latest @medusajs/eslint-plugin@latest
               @medusajs/framework@latest @medusajs/icons@latest @medusajs/medusa@latest
               @medusajs/test-utils@latest @medusajs/ui@latest mailtrap@latest
+              react@latest react-dom@latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -37,9 +38,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: ${{ !matrix.install }}
       - name: Use the ${{ matrix.deps }} Medusa and Mailtrap SDK
         if: matrix.install
-        run: npm install --no-save ${{ matrix.install }}
+        run: npm install --no-save --no-package-lock ${{ matrix.install }}
       - run: npm test
       - run: npx tsc --noEmit -p .
       - run: npx medusa plugin:build
