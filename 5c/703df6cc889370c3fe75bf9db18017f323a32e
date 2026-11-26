@@ -1,0 +1,22 @@
+.github/workflows/release.yml
+  s_c340bed4ea4e0f::t_32d6a64c82b20d 92-95
+.github/workflows/compatibility.yml
+  s_c340bed4ea4e0f::t_1fe222648c4d92 40,43,45
+  s_c340bed4ea4e0f::t_a4c59a4c6cf4e4 41-42,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c703df6cc889370c3fe75bf9db18017f323a32e",
+  "prompts": {},
+  "sessions": {
+    "s_c340bed4ea4e0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7c408ed1-4a46-4612-a1e8-1e0066e205db",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}
