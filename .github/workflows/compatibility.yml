@@ -37,6 +37,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Dependabot regenerates package-lock.json with the npm in `packageManager`; use the same
+      # npm so `npm ci` accepts its lockfiles (npm 10 rejects some npm 11 lockfiles). Only the
+      # locked row reads the lockfile; npm 11 hoists the lowest row's tree into a broken layout.
+      - name: Use the npm from packageManager
+        if: ${{ !matrix.install }}
+        run: npm install -g "$(jq -r .packageManager package.json)"
       - run: npm ci
         if: ${{ !matrix.install }}
       - name: Use the ${{ matrix.deps }} Medusa and Mailtrap SDK
