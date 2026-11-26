@@ -89,6 +89,10 @@ jobs:
           node-version-file: .tool-versions
           package-manager-cache: false
 
+      # Same npm Dependabot uses to write package-lock.json, so `npm ci` accepts the lockfile.
+      - name: Use the npm from packageManager
+        run: npm install -g "$(jq -r .packageManager package.json)"
+
       - name: Check version matches CHANGELOG.md
         env:
           EXPECTED: ${{ needs.detect.outputs.version }}
